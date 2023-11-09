@@ -1,85 +1,80 @@
-#include <eigen3/Eigen/Eigen>
-#include <eigen3/unsupported/Eigen/CXX11/Tensor>
+#include "xtensor/xarray.hpp"
+#include "xtensor/xio.hpp"
+#include "xtensor/xview.hpp"
+#include "xtensor/xrandom.hpp"
+#include "xtensor-blas/xlinalg.hpp"
 #include <vector>
 #include <memory>
 #include <iostream>
 
-/*
-using Eigen::Tensor;
 using std::cout;
 using std::endl;
+using DType = float;
 
-template <uint8_t D>
-struct GradTensor
+struct Tensor
 {
-  Tensor<float, D> tnsr;
-  Tensor<float, D + 1> grad;
-  std::vector<std::shared_ptr<GradTensor<D>>> back_links;
+  xt::xarray<DType> parm;
+  xt::xarray<DType> grad;
+  std::vector<std::shared_ptr<Tensor>> back_links;
 
   void backward()
   {
     for (auto t : back_links)
     {
-      t->grad = this->grad * t->grad;
+      t->grad = xt::linalg::tensordot(this->grad, t->grad, 1);
       t->backward();
-      cout << "backward: (" << this->grad.dimension(0) << ", " << this->grad.dimension(1)
-           << ") x (" << t->grad.dimension(0) << ", " << t->grad.dimension(1) << ")"
-           << endl;
+      // cout << "backward: " << this->grad.shape() << " x " << t->grad.shape()
+      // << endl;
     }
   }
 };
 
-template <uint8_t D>
-using SpTensor = std::shared_ptr<GradTensor<D>>;
-using SpTensor1 = SpTensor<1>;
-using SpTensor2 = SpTensor<2>;
-using SpTensor2 = SpTensor<2>;
+using SpTensor = std::shared_ptr<Tensor>;
 
-// assuming D = input dim = output dim
-template <uint8_t D>
 class LayerBase
 {
 protected:
   bool train_mode_;
-  virtual SpTensor<D> forwardImpl(SpTensor<D> x) = 0;
+  virtual SpTensor forwardImpl(SpTensor x) = 0;
+  virtual void gradient(SpTensor x, SpTensor y) = 0;
 
 public:
   LayerBase() : train_mode_(false) {}
   void setTrainMode(bool train_mode) { train_mode_ = train_mode; }
-  virtual SpTensor<D> forward(SpTensor<D> x)
+  virtual SpTensor forward(SpTensor x)
   {
-    SpTensor<D> y = forwardImpl(x);
+    SpTensor y = forwardImpl(x);
     if (train_mode_)
       gradient(x, y);
     return y;
   }
-  virtual void gradient(SpTensor<D> x, SpTensor<D> y) = 0;
 };
 
-template <uint8_t D>
-class Linear : public LayerBase<2>
+class Linear : public LayerBase
 {
-  SpTensor<D> w_;
-  SpTensor<D> b_;
+  SpTensor w_;
+  SpTensor b_;
 
 public:
-  Linear(int in_feat, int out_feat) : LayerBase(), w_(new GradTensor<D>), b_(new GradTensor<D>)
+  Linear(uint32_t in_dim, uint32_t out_dim)
+    : LayerBase(), w_(new Tensor), b_(new Tensor)
   {
-    w_->tnsr.setRandom();
-    w_->tnsr *= 0.1f;
-    b_->tnsr = Eigen::VectorXf::Zero(out_feat);
+    w_->parm = xt::random::randn<DType>({ out_dim, in_dim }) * 0.1f;
+    b_->parm = xt::zeros<DType>({ out_dim });
   }
-
-  virtual SpTensor<D> forwardImpl(SpTensor<D> x) override;
-  virtual void gradient(SpTensor<D> x, SpTensor<D> y) override;
+  virtual SpTensor forwardImpl(SpTensor x) override;
+  virtual void gradient(SpTensor x, SpTensor y) override;
 };
 
-template <uint8_t D>
-class L2Loss : public LayerBase<D>
+class DotLoss : public LayerBase
 {
+  SpTensor d_;
+
 public:
-  L2Loss() : LayerBase() {}
-  virtual SpTensor<D> forwardImpl(SpTensor<D> x) override;
-  virtual void gradient(SpTensor<D> x, SpTensor<D> y) override;
+  DotLoss(uint32_t in_dim) : LayerBase(), d_(new Tensor)
+  {
+    d_->parm = xt::random::rand<DType>({ in_dim });
+  }
+  virtual SpTensor forwardImpl(SpTensor x) override;
+  virtual void gradient(SpTensor x, SpTensor y) override;
 };
-*/

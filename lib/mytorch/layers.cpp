@@ -1,36 +1,37 @@
 
-/*
 #include "mytorch/layers.hpp"
 
-template <uint8_t D>
-SpTensor<D> Linear::forwardImpl(SpTensor<D> x)
+SpTensor Linear::forwardImpl(SpTensor x)
 {
   SpTensor y(new Tensor);
-  y->tnsr = w_->tnsr * x->tnsr + b_->tnsr;
+  y->parm = xt::linalg::tensordot(w_->parm, x->parm, 1) + b_->parm;
+  cout << "Linear::forward" << y->parm << endl;
   return y;
 }
 
-template <uint8_t D>
-void Linear::gradient(SpTensor<D> x, SpTensor<D> y)
+void Linear::gradient(SpTensor x, SpTensor y)
 {
-  // x.grad = dy/dx
-  x->grad = w_->tnsr;
-  // w_.grad = dy/dw
-  w_->grad =
+  // x (N), y (M)
+  // x.grad = dy/dx = w (M x N)
+  x->grad = w_->parm;
+  // w_.grad = dy/dw (M x M x N)
+  int M = y->parm.shape()[0];
+  int N = x->parm.shape()[0];
+  w_->grad = xt::zeros<DType>({ M, M, N });
+  for (int i = 0; i < M; ++i)
+    xt::view(w_->grad, i, i, xt::all()) = x->parm;
 }
 
-template <uint8_t D>
-SpTensor<D> L2Loss::forwardImpl(SpTensor<D> x)
+SpTensor DotLoss::forwardImpl(SpTensor x)
 {
   SpTensor y(new Tensor);
-  y->tnsr = x->tnsr.transpose() * x->tnsr.transpose();
+  y->parm = xt::pow(xt::linalg::dot(d_->parm, x->parm), 2.f);
   return y;
 }
 
-template <uint8_t D>
-void L2Loss::gradient(SpTensor<D> x, SpTensor<D> y)
+void DotLoss::gradient(SpTensor x, SpTensor y)
 {
-  // x.grad = dy/dx
-  // w_.grad = dy/dw
+  // x (N), y (1)
+  // x.grad = dy/dx = 2*d*d.T*x (N)
+  x->grad = 2 * xt::linalg::dot(d_->parm, x->parm) * d_->parm;
 }
-*/
