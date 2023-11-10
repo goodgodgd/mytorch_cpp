@@ -12,13 +12,15 @@ find_package(xtensor REQUIRED)
 find_package(xtensor-blas REQUIRED)
 
 add_library(mytorch SHARED)
-target_sources(mytorch PRIVATE lib/mytorch/layers.cpp)
+target_sources(mytorch PRIVATE
+    lib/mytorch/module.cpp
+)
 target_include_directories(mytorch PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${xtensor_INCLUDE_DIRS})
 target_compile_options(mytorch PRIVATE -Wall -Werror -O2)
 target_link_libraries(mytorch PUBLIC xtensor xtensor-blas)
 set_property(TARGET mytorch PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-add_executable(mlp main.cpp)
+add_executable(mlp src/main.cpp)
 target_compile_options(mlp PRIVATE -Wall -O2)
 target_link_libraries(mlp PUBLIC mytorch)
 

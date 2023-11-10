@@ -1,5 +1,4 @@
-
-#include "mytorch/layers.hpp"
+#include "mytorch/module.hpp"
 
 SpTensor Linear::forwardImpl(SpTensor x)
 {
@@ -34,4 +33,17 @@ void DotLoss::gradient(SpTensor x, SpTensor y)
   // x (N), y (1)
   // x.grad = dy/dx = 2*d*d.T*x (N)
   x->grad = 2 * xt::linalg::dot(d_->parm, x->parm) * d_->parm;
+}
+
+SpTensor Model::forwardImpl(SpTensor x)
+{
+  SpTensor y = x;
+  for (auto& layer : layers)
+    y = layer->forward(y);
+  return y;
+}
+
+void Model::gradient(SpTensor x, SpTensor y)
+{
+  // gradients of layers are computed in layer->forward() in forwardImpl()
 }
