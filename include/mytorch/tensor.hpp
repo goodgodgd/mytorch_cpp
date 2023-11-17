@@ -42,13 +42,7 @@ struct Tensor
 
   void backward()
   {
-    for (auto t : back_links)
-    {
-      // cout << "[backward] " << name << endl
-      //      << shapeToString(this->grad) << shapeToString(t->grad) << endl;
-      t->grad = xt::linalg::tensordot(this->grad, t->grad, 1);
-      t->backward();
-    }
+    // TODO
   }
 };
 

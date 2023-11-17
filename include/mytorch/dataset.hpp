@@ -10,6 +10,7 @@ class Dataset
 public:
   Dataset(uint32_t dim) : x(new Tensor)
   {
+    // TODO
     xt::random::seed(time(NULL));
     x->parm = xt::random::randint({ dim }, 0, 5);
     x->parm = xt::random::randint({ dim }, 0, 5);
