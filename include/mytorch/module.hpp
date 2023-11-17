@@ -24,7 +24,7 @@ public:
   }
 };
 
-using SpModule = std::shared_ptr<Module>;
+using UpModule = std::unique_ptr<Module>;
 
 class Linear : public Module
 {
@@ -37,7 +37,7 @@ public:
     , w_(new Tensor("lin_w", train_mode))
     , b_(new Tensor("lin_b", train_mode))
   {
-    w_->parm = xt::random::randn<DType>({ out_dim, in_dim }) * 0.1f;
+    w_->parm = xt::random::randn<DType>({ out_dim, in_dim });
     b_->parm = xt::zeros<DType>({ out_dim });
   }
   virtual ~Linear() {}
@@ -47,7 +47,7 @@ public:
 
 class Model : public Module
 {
-  std::vector<std::unique_ptr<Module>> layers;
+  std::vector<UpModule> layers;
 
 public:
   Model(std::vector<int> dims, bool train_mode) : Module(train_mode)
@@ -65,9 +65,10 @@ class DotLoss : public Module
   SpTensor d_;
 
 public:
-  DotLoss(uint32_t in_dim) : Module(true), d_(new Tensor("dot", true))
+  DotLoss(uint32_t in_dim) : Module(true), d_(new Tensor("dot", false))
   {
     d_->parm = xt::random::rand<DType>({ in_dim });
+    cout << "[DotLoss] d=" << d_->parm << endl;
   }
   virtual ~DotLoss() {}
   virtual SpTensor forwardImpl(SpTensor x) override;

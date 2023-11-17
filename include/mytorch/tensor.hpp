@@ -13,6 +13,16 @@ using std::cout;
 using std::endl;
 using DType = float;
 
+std::string shapeToString(const xt::xarray<DType>& x)
+{
+  auto shape = x.shape();
+  std::string str = "(";
+  for (auto e : shape)
+    str += std::to_string(e) + ",";
+  str += ')';
+  return str;
+}
+
 struct Tensor
 {
   std::string name;
@@ -34,6 +44,8 @@ struct Tensor
   {
     for (auto t : back_links)
     {
+      // cout << "[backward] " << name << endl
+      //      << shapeToString(this->grad) << shapeToString(t->grad) << endl;
       t->grad = xt::linalg::tensordot(this->grad, t->grad, 1);
       t->backward();
     }
@@ -43,3 +55,11 @@ struct Tensor
 uint32_t Tensor::count = 0;
 
 using SpTensor = std::shared_ptr<Tensor>;
+
+std::string tensorShapeToString(SpTensor x)
+{
+  std::string str = "[" + x->name + ":p";
+  str += shapeToString(x->parm) + ", g";
+  str += shapeToString(x->grad) + "]";
+  return str;
+}
