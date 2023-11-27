@@ -13,7 +13,6 @@ public:
     // TODO
     xt::random::seed(time(NULL));
     x->parm = xt::random::randint({ dim }, 0, 5);
-    x->parm = xt::random::randint({ dim }, 0, 5);
     cout << "[Dataset] d=" << x->parm << endl;
   }
   SpTensor next() const { return x; }

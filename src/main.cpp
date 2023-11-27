@@ -1,4 +1,3 @@
-#include "mytorch/module.hpp"
 #include "mytorch/dataset.hpp"
 #include "mytorch/trainer.hpp"
 
